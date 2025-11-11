@@ -21,6 +21,12 @@
 - Outbound: HTTP POST → `N8N_INBOUND_WEBHOOK_URL` с упрощённым payload.
 - Control: HTTP API → наш сервис → Mattermost REST API (создание постов, чтение треда).
 
+## Технологический стек
+- Платформа: .NET 8 (C#).
+- Веб: ASP.NET Core Minimal APIs для HTTP сервиса.
+- WebSocket клиент: стандартный `ClientWebSocket` или библиотека `Websocket.Client`.
+- HTTP к Mattermost и n8n: `HttpClient` с ретраями/таймаутами.
+
 ## Аутентификация API
 - Все входящие запросы в наш HTTP API должны содержать заголовок `X-API-Key: <SERVICE_API_KEY>`.
 - 401, если ключ отсутствует/неверный.
