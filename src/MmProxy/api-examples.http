@@ -1,0 +1,89 @@
+### Health Check
+GET http://localhost:8080/health
+
+### Answer - Thread Reply
+POST http://localhost:8080/answer
+Content-Type: application/json
+X-API-Key: your-service-api-key
+
+{
+  "channel_id": "channel_id_here",
+  "root_id": "root_post_id_here",
+  "text": "This is a reply to the thread"
+}
+
+### Answer - Thread Reply with Props and Files
+POST http://localhost:8080/answer
+Content-Type: application/json
+X-API-Key: your-service-api-key
+
+{
+  "channel_id": "channel_id_here",
+  "root_id": "root_post_id_here",
+  "text": "Reply with attachments",
+  "props": {
+    "custom_key": "custom_value"
+  },
+  "file_ids": ["file_id_1", "file_id_2"]
+}
+
+### Answer - Direct Message (by user_id)
+POST http://localhost:8080/answer
+Content-Type: application/json
+X-API-Key: your-service-api-key
+
+{
+  "user_id": "user_id_here",
+  "text": "Direct message to user"
+}
+
+### Answer - Direct Message (by username)
+POST http://localhost:8080/answer
+Content-Type: application/json
+X-API-Key: your-service-api-key
+
+{
+  "username": "username_here",
+  "text": "Direct message by username"
+}
+
+### Get Thread - Default (asc, limit 50)
+POST http://localhost:8080/get_thread
+Content-Type: application/json
+X-API-Key: your-service-api-key
+
+{
+  "root_id": "root_post_id_here"
+}
+
+### Get Thread - Custom Limit and Order
+POST http://localhost:8080/get_thread
+Content-Type: application/json
+X-API-Key: your-service-api-key
+
+{
+  "root_id": "root_post_id_here",
+  "limit": 10,
+  "order": "desc"
+}
+
+### Test Invalid API Key (should return 401)
+POST http://localhost:8080/answer
+Content-Type: application/json
+X-API-Key: invalid-key
+
+{
+  "channel_id": "channel_id_here",
+  "root_id": "root_post_id_here",
+  "text": "This should fail"
+}
+
+### Test Missing API Key (should return 401)
+POST http://localhost:8080/answer
+Content-Type: application/json
+
+{
+  "channel_id": "channel_id_here",
+  "root_id": "root_post_id_here",
+  "text": "This should fail"
+}

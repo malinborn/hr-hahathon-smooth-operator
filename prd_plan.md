@@ -22,17 +22,18 @@
 - Заголовок `X-Webhook-Secret` обязателен.
 - **Итог:** Реализован сервис `N8nWebhookForwarder`, который форвардит события из WebSocket в n8n. Добавлены модели `N8nWebhookPayload`, `N8nUser`, `N8nFile`. Настроен HttpClient с retry политикой для Mattermost API. События автоматически форвардятся при получении DM или сообщений в тредах.
 
-### Этап 4. HTTP API для n8n
+### Этап 4. HTTP API для n8n ✅
 - `POST /answer` — ответ в тред по `channel_id + root_id`.
 - `POST /get_thread` — корневой пост и реплаи, `limit`, `order`.
 - Авторизация всех запросов: `X-API-Key: <SERVICE_API_KEY>` → 401 при неверном ключе.
+- **Итог:** Реализованы endpoints `/answer` и `/get_thread` с авторизацией через `X-API-Key`. Создан `MattermostApiService` для работы с Mattermost REST API, `ApiKeyAuthMiddleware` для проверки API ключа. Добавлена поддержка DM (Direct Messages). Документация в `API.md` и примеры в `api-examples.http`.
 
 ### Этап 5. Нефункциональные требования
 - HTTP к MM: таймаут 10с; ретраи при 5xx/сетевых (до 3 попыток).
 - Простые логи в stdout (info|error).
 - Конфигурация через ENV: `MATTERMOST_WS_URL`, `MATTERMOST_API_URL`, `MATTERMOST_BOT_TOKEN`, `BOT_USER_ID?`, `N8N_INBOUND_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET`, `SERVICE_API_KEY`, `SERVICE_PORT` (8080).
 
-## Этап 2 — Расширение (после MVP)
+## Этап 6 — Расширение (после MVP)
 - **DM ответы** в `POST /answer` по `user_id`/`username` (опционально для MVP).
 - Мелкие улучшения стабильности и DX (лучшие логи, конфиг флагов и т.п.).
 

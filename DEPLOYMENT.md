@@ -20,6 +20,10 @@ sudo apt install -y docker.io docker-compose-plugin
 
 # Добавьте пользователя в группу docker
 sudo usermod -aG docker $USER
+
+# ВАЖНО: После этого нужно перелогиниться для применения изменений
+# Выйдите и войдите снова, или используйте:
+newgrp docker
 ```
 
 2. Создайте директорию для проекта:
@@ -131,8 +135,8 @@ docker compose down
 # Найти предыдущий образ
 docker images | grep mmproxy
 
-# Изменить тег в docker-compose.yaml или в .env
-# Например: ghcr.io/your-repo/mmproxy:main-abc1234
+# Изменить тег в docker-compose.yaml (или запустить предыдущий коммит CI/CD)
+# Например: image: ghcr.io/your-repo/mmproxy:main-abc1234
 
 # Запустить с предыдущим образом
 docker compose up -d
@@ -165,5 +169,6 @@ docker compose logs mmproxy
 Проверьте:
 1. SSH ключ добавлен в GitHub Secrets
 2. Пользователь имеет доступ к VM
-3. Docker установлен и доступен пользователю
-4. Директория `/opt/mmproxy` существует и доступна
+3. Docker установлен на VM
+4. **Пользователь добавлен в группу docker** и перелогинился
+5. Директория `/opt/mmproxy` существует и доступна

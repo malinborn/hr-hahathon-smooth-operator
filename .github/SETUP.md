@@ -73,10 +73,19 @@ cd /opt/mmproxy
 
 ### Ошибка: "docker: command not found"
 
-Docker не установлен на VM или пользователь не в группе docker:
+Docker не установлен на VM:
+```bash
+sudo apt update
+sudo apt install -y docker.io docker-compose-plugin
+```
+
+### Ошибка: "permission denied while trying to connect to the Docker daemon socket"
+
+Пользователь не добавлен в группу docker. Исправьте это:
 ```bash
 sudo usermod -aG docker $USER
-# Перелогиньтесь
+# ВАЖНО: После этого нужно перелогиниться или использовать:
+newgrp docker
 ```
 
 ### Ошибка: "No such file or directory: /opt/mmproxy"

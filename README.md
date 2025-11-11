@@ -78,23 +78,35 @@ docker run -d \
 
 ## HTTP API
 
+Все API endpoints (кроме `/health`) требуют авторизации через заголовок `X-API-Key`.
+
 ### POST /answer
-Отправить ответ в тред Mattermost.
+Отправить ответ в тред или личное сообщение.
 
 **Headers:**
 - `X-API-Key: <SERVICE_API_KEY>`
 
-**Body:**
+**Body (тред):**
 ```json
 {
   "channel_id": "...",
   "root_id": "...",
-  "message": "..."
+  "text": "...",
+  "props": {},
+  "file_ids": ["..."]
+}
+```
+
+**Body (DM):**
+```json
+{
+  "user_id": "...",
+  "text": "..."
 }
 ```
 
 ### POST /get_thread
-Получить сообщения треда.
+Получить корневой пост и реплаи треда.
 
 **Headers:**
 - `X-API-Key: <SERVICE_API_KEY>`
@@ -102,14 +114,16 @@ docker run -d \
 **Body:**
 ```json
 {
-  "channel_id": "...",
   "root_id": "...",
-  "limit": 50
+  "limit": 50,
+  "order": "asc"
 }
 ```
 
 ### GET /health
-Healthcheck endpoint.
+Healthcheck endpoint (без авторизации).
+
+**Подробная документация:** [API.md](./API.md)
 
 ## Архитектура
 

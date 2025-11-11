@@ -1,4 +1,6 @@
 using MmProxy.Configuration;
+using MmProxy.Endpoints;
+using MmProxy.Middleware;
 using MmProxy.Services;
 using Polly;
 using Polly.Extensions.Http;
@@ -7,6 +9,10 @@ using Polly.Extensions.Http;
 DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure port from environment
+var servicePort = int.TryParse(builder.Configuration["SERVICE_PORT"] ?? builder.Configuration["Service:Port"], out var p) ? p : 8080;
+builder.WebHost.UseUrls($"http://0.0.0.0:{servicePort}");
 
 // Configure Mattermost options from environment variables and appsettings
 var mattermostOptions = new MattermostOptions(
@@ -25,6 +31,14 @@ var n8nOptions = new N8nOptions(
 );
 
 builder.Services.AddSingleton(n8nOptions);
+
+// Configure service options
+var serviceOptions = new ServiceOptions(
+    ApiKey: builder.Configuration["SERVICE_API_KEY"] ?? builder.Configuration["Service:ApiKey"] ?? "",
+    Port: int.TryParse(builder.Configuration["SERVICE_PORT"] ?? builder.Configuration["Service:Port"], out var port) ? port : 8080
+);
+
+builder.Services.AddSingleton(serviceOptions);
 
 // Configure retry policy for HTTP clients
 var retryPolicy = HttpPolicyExtensions
@@ -51,6 +65,7 @@ builder.Services.AddHttpClient("N8nWebhook", client =>
 
 // Add services
 builder.Services.AddSingleton<N8nWebhookForwarder>();
+builder.Services.AddSingleton<MattermostApiService>();
 
 // Add WebSocket client as hosted service
 builder.Services.AddSingleton<MattermostWebSocketClient>();
@@ -75,7 +90,13 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+// Add API key authentication middleware
+app.UseMiddleware<ApiKeyAuthMiddleware>();
+
 app.MapControllers();
+
+// Map API endpoints
+app.MapApiEndpoints();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .WithName("HealthCheck");
