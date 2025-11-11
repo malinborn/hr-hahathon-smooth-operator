@@ -5,23 +5,29 @@
 - **Без распила задач**: делим только на логичные крупные этапы.
 - **Без лишнего функционала**: делаем только то, что описано в PRD (см. prd.md).
 
-## Этап 1 — MVP (обязательный минимум)
-- **WS‑интеграция с Mattermost**
-  - Постоянный WebSocket к MM (events: `posted`), автопереподключение с backoff 1→30 сек.
-  - Фильтрация событий: пропускать только DM (`channel_type = D`) и посты с `root_id` (треды).
-- **Форвард в n8n**
-  - HTTP POST на `N8N_INBOUND_WEBHOOK_URL` с минимальным payload (см. prd.md),
-  - Заголовок `X-Webhook-Secret` обязателен.
-- **HTTP API сервиса**
-  - `POST /answer` — отправить ответ в тред по `channel_id + root_id`.
-  - `POST /get_thread` — вернуть корневой пост и реплаи, `limit`, `order`.
-  - Авторизация: `X-API-Key: <SERVICE_API_KEY>` → 401 при несовпадении.
-- **Нефункциональные требования**
-  - HTTP к MM: таймаут 10с; ретраи при 5xx/сетевых (до 3 попыток).
-  - Простые логи в stdout (info|error).
-- **Конфигурация (ENV)**
-  - `MATTERMOST_WS_URL`, `MATTERMOST_API_URL`, `MATTERMOST_BOT_TOKEN`, `BOT_USER_ID?`,
-    `N8N_INBOUND_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET`, `SERVICE_API_KEY`, `SERVICE_PORT` (8080).
+## Этапы реализации
+### Этап 1. WebSocket к Mattermost
+- Постоянный WebSocket к MM (events: `posted`).
+- Автопереподключение с backoff 1→30 сек.
+- Фильтрация событий: только DM (`channel_type = D`) и посты с `root_id` (треды).
+
+### Этап 2. Докеризация и CI/CD на сервер
+- Dockerfile, healthcheck, минимальные логи.
+- GHCR образ; compose на ВМ; GitHub Actions с автодеплоем (appleboy/ssh-action).
+
+### Этап 3. Форвард событий в n8n
+- HTTP POST на `N8N_INBOUND_WEBHOOK_URL` с минимальным payload (см. prd.md).
+- Заголовок `X-Webhook-Secret` обязателен.
+
+### Этап 4. HTTP API для n8n
+- `POST /answer` — ответ в тред по `channel_id + root_id`.
+- `POST /get_thread` — корневой пост и реплаи, `limit`, `order`.
+- Авторизация всех запросов: `X-API-Key: <SERVICE_API_KEY>` → 401 при неверном ключе.
+
+### Этап 5. Нефункциональные требования
+- HTTP к MM: таймаут 10с; ретраи при 5xx/сетевых (до 3 попыток).
+- Простые логи в stdout (info|error).
+- Конфигурация через ENV: `MATTERMOST_WS_URL`, `MATTERMOST_API_URL`, `MATTERMOST_BOT_TOKEN`, `BOT_USER_ID?`, `N8N_INBOUND_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET`, `SERVICE_API_KEY`, `SERVICE_PORT` (8080).
 
 ## Этап 2 — Расширение (после MVP)
 - **DM ответы** в `POST /answer` по `user_id`/`username` (опционально для MVP).
