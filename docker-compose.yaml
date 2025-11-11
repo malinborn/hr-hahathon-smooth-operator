@@ -1,0 +1,42 @@
+services:
+  mmproxy:
+    # For local development build from source
+    # For production, CI/CD creates this file with the correct GHCR image
+    build: .
+    image: mmproxy:local
+    container_name: mmproxy
+    restart: unless-stopped
+    
+    ports:
+      - "8080:8080"
+    
+    environment:
+      # Mattermost configuration
+      MATTERMOST_WS_URL: ${MATTERMOST_WS_URL}
+      MATTERMOST_API_URL: ${MATTERMOST_API_URL}
+      MATTERMOST_BOT_TOKEN: ${MATTERMOST_BOT_TOKEN}
+      BOT_USER_ID: ${BOT_USER_ID:-}
+      
+      # n8n configuration
+      N8N_INBOUND_WEBHOOK_URL: ${N8N_INBOUND_WEBHOOK_URL}
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+      
+      # Service configuration
+      SERVICE_API_KEY: ${SERVICE_API_KEY}
+      SERVICE_PORT: ${SERVICE_PORT:-8080}
+      
+      # ASP.NET Core configuration
+      ASPNETCORE_URLS: http://+:8080
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

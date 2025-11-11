@@ -34,5 +34,19 @@ public record MattermostPost(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("props")] Dictionary<string, object>? Props,
     [property: JsonPropertyName("hashtags")] string? Hashtags,
-    [property: JsonPropertyName("pending_post_id")] string? PendingPostId
+    [property: JsonPropertyName("pending_post_id")] string? PendingPostId,
+    [property: JsonPropertyName("file_ids")] List<string>? FileIds,
+    [property: JsonPropertyName("metadata")] MattermostPostMetadata? Metadata
+);
+
+public record MattermostPostMetadata(
+    [property: JsonPropertyName("files")] List<MattermostFileInfo>? Files
+);
+
+public record MattermostFileInfo(
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("extension")] string? Extension,
+    [property: JsonPropertyName("size")] long Size,
+    [property: JsonPropertyName("mime_type")] string? MimeType
 );

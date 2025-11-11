@@ -1,0 +1,133 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/mmproxy
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+  
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ secrets.VM_SSH_PORT || '22' }}
+          script: |
+            # Create directory if not exists
+            mkdir -p /opt/mmproxy
+            cd /opt/mmproxy || exit 1
+            
+            # Create docker-compose.yaml
+            cat > docker-compose.yaml <<'EOF'
+            services:
+              mmproxy:
+                image: ghcr.io/${{ github.repository }}/mmproxy:latest
+                container_name: mmproxy
+                restart: unless-stopped
+                
+                ports:
+                  - "8080:8080"
+                
+                environment:
+                  # Mattermost configuration
+                  MATTERMOST_WS_URL: ${MATTERMOST_WS_URL}
+                  MATTERMOST_API_URL: ${MATTERMOST_API_URL}
+                  MATTERMOST_BOT_TOKEN: ${MATTERMOST_BOT_TOKEN}
+                  BOT_USER_ID: ${BOT_USER_ID:-}
+                  
+                  # n8n configuration
+                  N8N_INBOUND_WEBHOOK_URL: ${N8N_INBOUND_WEBHOOK_URL}
+                  N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+                  
+                  # Service configuration
+                  SERVICE_API_KEY: ${SERVICE_API_KEY}
+                  SERVICE_PORT: ${SERVICE_PORT:-8080}
+                  
+                  # ASP.NET Core configuration
+                  ASPNETCORE_URLS: http://+:8080
+                
+                healthcheck:
+                  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+                  interval: 30s
+                  timeout: 5s
+                  retries: 3
+                  start_period: 10s
+                
+                logging:
+                  driver: json-file
+                  options:
+                    max-size: "10m"
+                    max-file: "3"
+            EOF
+            
+            # Pull latest image
+            docker compose pull
+            
+            # Recreate container with new image
+            docker compose down
+            docker compose up -d
+            
+            # Show status
+            docker compose ps
+            
+            # Wait for healthcheck
+            echo "Waiting for service to be healthy..."
+            for i in {1..30}; do
+              if docker compose ps | grep -q "healthy"; then
+                echo "Service is healthy!"
+                exit 0
+              fi
+              echo "Waiting... ($i/30)"
+              sleep 2
+            done
+            
+            echo "Service did not become healthy in time"
+            docker compose logs --tail=50
+            exit 1

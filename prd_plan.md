@@ -12,13 +12,15 @@
 - Фильтрация событий: только DM (`channel_type = D`) и посты с `root_id` (треды).
 - **Итог:** Реализовано в `src/MmProxy/Services/MattermostWebSocketClient.cs`. Тестировано подключение к MM. Тест-кейсы: TC-1.1–1.8 (подключение, reconnect, фильтрация DM/тредов, health endpoint).
 
-### Этап 2. Докеризация и CI/CD на сервер
+### Этап 2. Докеризация и CI/CD на сервер ✅
 - Dockerfile, healthcheck, минимальные логи.
 - GHCR образ; compose на ВМ; GitHub Actions с автодеплоем (appleboy/ssh-action).
+- **Итог:** Реализованы Dockerfile (multi-stage build), .dockerignore, docker-compose.yaml, GitHub Actions workflow (.github/workflows/deploy.yml). Созданы документы: DEPLOYMENT.md, .github/SETUP.md, обновлён README.md.
 
-### Этап 3. Форвард событий в n8n
+### Этап 3. Форвард событий в n8n ✅
 - HTTP POST на `N8N_INBOUND_WEBHOOK_URL` с минимальным payload (см. prd.md).
 - Заголовок `X-Webhook-Secret` обязателен.
+- **Итог:** Реализован сервис `N8nWebhookForwarder`, который форвардит события из WebSocket в n8n. Добавлены модели `N8nWebhookPayload`, `N8nUser`, `N8nFile`. Настроен HttpClient с retry политикой для Mattermost API. События автоматически форвардятся при получении DM или сообщений в тредах.
 
 ### Этап 4. HTTP API для n8n
 - `POST /answer` — ответ в тред по `channel_id + root_id`.

@@ -15,7 +15,7 @@ public class MattermostWebSocketClient(
     private int _reconnectDelaySeconds = 1;
     private const int MaxReconnectDelaySeconds = 30;
 
-    public event Func<MattermostPost, Task>? OnPostReceived;
+    public event Func<MattermostPost, string, Task>? OnPostReceived;
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -126,7 +126,7 @@ public class MattermostWebSocketClient(
             logger.LogInformation("Received {Type} post: {Id} in channel {ChannelId}", 
                 isDm ? "DM" : "thread", post.Id, post.ChannelId);
 
-            OnPostReceived?.Invoke(post);
+            OnPostReceived?.Invoke(post, mmEvent.Data.ChannelType!);
         }
         catch (JsonException ex)
         {
@@ -140,7 +140,15 @@ public class MattermostWebSocketClient(
 
     public async ValueTask DisposeAsync()
     {
-        _reconnectCts?.Cancel();
+        try
+        {
+            _reconnectCts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Already disposed, ignore
+        }
+        
         _reconnectCts?.Dispose();
         _client?.Dispose();
         await Task.CompletedTask;

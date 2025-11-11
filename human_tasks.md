@@ -20,8 +20,9 @@
 ## 3) Инфраструктура и доступы
 - Подготовить Ubuntu‑VM с доступом по SSH.
 - Установить Docker и Docker Compose plugin.
-- Создать каталог деплоя на ВМ (например, `/opt/mm-proxy`) и открыть порт `8080` (или настроить обратный прокси).
-- Создать файл `/opt/mm-proxy/.env` со значениями переменных окружения:
+- Создать каталог деплоя на ВМ (например, `/opt/mmproxy`) и открыть порт `8080` (или настроить обратный прокси).
+- Создать файл `/opt/mmproxy/.env` со значениями переменных окружения:
+  > **Примечание:** Файл `docker-compose.yaml` будет создан автоматически при первом деплое через CI/CD.
   - `MATTERMOST_WS_URL`
   - `MATTERMOST_API_URL`
   - `MATTERMOST_BOT_TOKEN`
@@ -31,8 +32,10 @@
   - `SERVICE_API_KEY`
   - `SERVICE_PORT=8080`
 - Добавить секреты в GitHub Actions (репозиторий проекта):
-  - `SSH_HOST`, `SSH_USER`, `SSH_KEY` — доступ к ВМ.
-  - `GHCR_USERNAME`, `GHCR_TOKEN` — PAT с правами packages:read,write для `docker login` на ВМ.
+  - `VM_HOST` — IP-адрес или hostname ВМ
+  - `VM_USERNAME` — username для SSH доступа
+  - `VM_SSH_KEY` — приватный SSH ключ для доступа к ВМ
+  - `VM_SSH_PORT` (опционально) — SSH порт, по умолчанию 22
 
 ## 4) Секреты и передача
 - Сгенерировать `SERVICE_API_KEY` и безопасно передать (или сразу разместить в `.env` на ВМ).
@@ -52,7 +55,14 @@
 - Отправить запрос к API с неверным `X-API-Key` → получить 401.
 
 ## 7) Что передать мне
-- Хосты/URL: `MATTERMOST_WS_URL`, `MATTERMOST_API_URL`, `N8N_INBOUND_WEBHOOK_URL`.
-- Токены/секреты: `MATTERMOST_BOT_TOKEN`, `N8N_WEBHOOK_SECRET`, `SERVICE_API_KEY` (лучше — уже в `.env` на ВМ).
-- Тестовые идентификаторы: `channel_id`, `root_id` (для треда), `user_id`/`username` (для DM — если будем включать).
-- Подтверждение готовности ВМ/SSH и созданных GitHub Secrets.
+После выполнения всех шагов выше, подтвердите:
+- ✅ ВМ подготовлена: Docker установлен, директория `/opt/mmproxy` создана
+- ✅ Файл `.env` создан на ВМ со всеми переменными
+- ✅ GitHub Secrets настроены: `VM_HOST`, `VM_USERNAME`, `VM_SSH_KEY`, `VM_SSH_PORT` (опционально)
+- ✅ SSH доступ работает (можно протестировать вручную)
+- ✅ Mattermost бот создан и имеет нужные права
+- ✅ n8n webhook настроен и доступен
+
+Для тестирования также понадобятся:
+- Тестовые идентификаторы: `channel_id`, `root_id` (для треда)
+- `user_id`/`username` для тестирования DM (опционально)
