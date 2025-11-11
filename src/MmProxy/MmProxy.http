@@ -1,0 +1,6 @@
+@MmProxy_HostAddress = http://localhost:5261
+
+GET {{MmProxy_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

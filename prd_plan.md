@@ -6,10 +6,11 @@
 - **Без лишнего функционала**: делаем только то, что описано в PRD (см. prd.md).
 
 ## Этапы реализации
-### Этап 1. WebSocket к Mattermost
+### Этап 1. WebSocket к Mattermost ✅
 - Постоянный WebSocket к MM (events: `posted`).
 - Автопереподключение с backoff 1→30 сек.
 - Фильтрация событий: только DM (`channel_type = D`) и посты с `root_id` (треды).
+- **Итог:** Реализовано в `src/MmProxy/Services/MattermostWebSocketClient.cs`. Тестировано подключение к MM. Тест-кейсы: TC-1.1–1.8 (подключение, reconnect, фильтрация DM/тредов, health endpoint).
 
 ### Этап 2. Докеризация и CI/CD на сервер
 - Dockerfile, healthcheck, минимальные логи.
